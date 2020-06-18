@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
-import { useFetch } from "./hooks/useFetch";
-
+import ConditionsTable from "./components/ConditionsTable";
 import { Button, Container, TextField, Typography } from "@material-ui/core";
 
 function App() {
@@ -57,7 +56,7 @@ function App() {
         console.log(entries);
         const conditions = entries.map((entry) => ({
           name: entry?.resource?.code?.text,
-          date: entry?.resource?.dateRecorded,
+          dateReported: entry?.resource?.dateRecorded,
         }));
         setConditions(conditions);
         setConditionLoading(false);
@@ -98,6 +97,11 @@ function App() {
       >
         Submit
       </Button>
+      <ConditionsTable
+        conditions={conditions}
+        isLoading={conditionLoading}
+        hasError={hasConditionError}
+      />
     </Container>
   );
 }
