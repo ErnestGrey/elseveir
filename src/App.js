@@ -1,29 +1,104 @@
-import React from "react";
-import logo from "./logo.svg";
+import React, { useEffect, useState } from "react";
 import "./App.css";
 import { useFetch } from "./hooks/useFetch";
 
+import { Button, Container, TextField, Typography } from "@material-ui/core";
+
 function App() {
+  const [conditions, setConditions] = useState(null);
+  const [conditionLoading, setConditionLoading] = useState(false);
+  const [hasConditionError, setHasConditionError] = useState(false);
+  const [patientResponse, setPatientResponse] = useState(null);
+  const [patientLoading, setPatientLoading] = useState(false);
+  const [hasPatientError, setHasPatientError] = useState(false);
+  const [patientId, setPatientId] = useState("");
+
   const sandboxUrl =
-    "https://fhir-open.sandboxcerner.com/dstu2/0b8a0111-e8e6-4c26-a91c-5069cbc6b1ca/Patient/1316024";
-  var obj = {
+    "https://fhir-open.sandboxcerner.com/dstu2/0b8a0111-e8e6-4c26-a91c-5069cbc6b1ca/";
+  const request = {
     method: "GET",
     headers: {
       Accept: "application/json+fhir",
     },
   };
-  const [response, loading, hasError] = useFetch(sandboxUrl, obj);
+
+  // useEffect(() => {
+  //   fetchPatientData();
+  //   fetchConditionData();
+  // }, []);
+
+  const fetchPatientData = () => {
+    const patientUrl = `${sandboxUrl}Patient/${patientId}`;
+    setPatientLoading(true);
+    fetch(patientUrl, request)
+      .then((res) => {
+        return res.json();
+      })
+      .then((data) => {
+        setPatientResponse(data);
+        setPatientLoading(false);
+      })
+      .catch(() => {
+        setHasPatientError(true);
+        setPatientLoading(false);
+      });
+  };
+
+  const fetchConditionData = () => {
+    const conditionUrl = `${sandboxUrl}Condition?patient=${patientId}`;
+    setConditionLoading(true);
+    fetch(conditionUrl, request)
+      .then((res) => {
+        return res.json();
+      })
+      .then((data) => {
+        console.log(data);
+        const entries = data.entry.slice(0, 30);
+        console.log(entries);
+        const conditions = entries.map((entry) => ({
+          name: entry?.resource?.code?.text,
+          date: entry?.resource?.dateRecorded,
+        }));
+        setConditions(conditions);
+        setConditionLoading(false);
+      })
+      .catch(() => {
+        setHasConditionError(true);
+        setConditionLoading(false);
+      });
+  };
+
+  const handlePatientIdOnChange = ({ target }) => {
+    setPatientId(target.value);
+  };
+
+  const handleSumbitButtonClick = (event) => {
+    event.preventDefault();
+    fetchPatientData();
+    fetchConditionData();
+  };
 
   return (
-    <>
-      {loading ? (
-        <div>Loading...</div>
-      ) : hasError ? (
-        <div>Error occured.</div>
-      ) : (
-        <div>{response?.resourceType}</div>
-      )}
-    </>
+    <Container maxWidth="lg">
+      <Typography align="center" variant="h3">
+        Welcome to the patient portal!
+      </Typography>
+      <TextField
+        label="Patient ID"
+        required
+        type="text"
+        variant="outlined"
+        value={patientId}
+        onChange={handlePatientIdOnChange}
+      />
+      <Button
+        variant="contained"
+        disableRipple
+        onClick={handleSumbitButtonClick}
+      >
+        Submit
+      </Button>
+    </Container>
   );
 }
 
