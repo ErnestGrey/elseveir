@@ -32,10 +32,6 @@ const useStyles = makeStyles((theme) => ({
   title: {
     marginTop: theme.spacing(5),
   },
-
-  loadingIndicator: {
-    alignSelf: "center",
-  },
 }));
 
 function App() {
@@ -100,14 +96,14 @@ function App() {
       </div>
       <div className={classes.section}>
         {patientLoading ? (
-          <CircularProgress className={classes.loadingIndicator} />
+          <CircularProgress />
         ) : (
           patient && <PatientCard patient={patient} error={patientError} />
         )}
       </div>
       <div className={classes.section}>
         {conditionsLoading ? (
-          <CircularProgress className={classes.loadingIndicator} />
+          <CircularProgress />
         ) : (
           conditions && (
             <ConditionsTable results={conditions} error={conditionsError} />
