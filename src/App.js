@@ -11,11 +11,12 @@ import {
   CircularProgress,
 } from "@material-ui/core";
 
-const useStyles = makeStyles((theme) => ({
-  root: {
-    backgroundColor: "grey",
-  },
+import {
+  fetchPatientConditions,
+  fetchPatientData,
+} from "./services/PatientService";
 
+const useStyles = makeStyles((theme) => ({
   inputContainer: {
     marginTop: theme.spacing(4),
     display: "flex",
@@ -40,76 +41,12 @@ const useStyles = makeStyles((theme) => ({
 function App() {
   const classes = useStyles();
   const [conditions, setConditions] = useState(null);
-  const [conditionResultsLoading, setConditionResultsLoading] = useState(false);
-  const [hasConditionError, setHasConditionError] = useState(false);
+  const [conditionsLoading, setConditionsLoading] = useState(false);
+  const [conditionsError, setConditionsError] = useState(false);
   const [patient, setPatient] = useState(null);
   const [patientLoading, setPatientLoading] = useState(false);
-  const [hasPatientError, setHasPatientError] = useState(false);
+  const [patientError, setPatientError] = useState(false);
   const [patientId, setPatientId] = useState("1316024");
-
-  const sandboxUrl =
-    "https://fhir-open.sandboxcerner.com/dstu2/0b8a0111-e8e6-4c26-a91c-5069cbc6b1ca/";
-  const request = {
-    method: "GET",
-    headers: {
-      Accept: "application/json+fhir",
-    },
-  };
-
-  const fetchPatientData = () => {
-    const patientUrl = `${sandboxUrl}Patient/${patientId}`;
-    setPatientLoading(true);
-    fetch(patientUrl, request)
-      .then((res) => {
-        return res.json();
-      })
-      .then((data) => {
-        console.log("data", data);
-
-        const patient = {
-          name: data?.name[0].text,
-          birthDate: data?.birthDate,
-          gender: data?.gender,
-        };
-        console.log("pat", patient);
-        setPatient(patient);
-        setPatientLoading(false);
-      })
-      .catch(() => {
-        setHasPatientError(true);
-        setPatientLoading(false);
-      });
-  };
-
-  const fetchConditionData = () => {
-    const conditionUrl = `${sandboxUrl}Condition?patient=${patientId}`;
-    setConditionResultsLoading(true);
-    fetch(conditionUrl, request)
-      .then((res) => {
-        return res.json();
-      })
-      .then((data) => {
-        const entries = data.entry.slice(0, 50);
-        const conditions = entries.map((entry) => ({
-          id: entry?.resource?.id,
-          name: entry?.resource?.code?.text,
-          dateReported: entry?.resource?.dateRecorded,
-        }));
-        const filteredConditions = conditions.reduce((unique, o) => {
-          if (!unique.some((obj) => obj.id === o.id)) {
-            unique.push(o);
-          }
-          return unique;
-        }, []);
-
-        setConditions(filteredConditions);
-        setConditionResultsLoading(false);
-      })
-      .catch(() => {
-        setHasConditionError(true);
-        setConditionResultsLoading(false);
-      });
-  };
 
   const handlePatientIdOnChange = ({ target }) => {
     setPatientId(target.value);
@@ -117,8 +54,26 @@ function App() {
 
   const handleSubmitButtonClick = (event) => {
     event.preventDefault();
-    fetchPatientData();
-    fetchConditionData();
+    setPatientLoading(true);
+    setConditionsLoading(true);
+
+    fetchPatientData(patientId)
+      .then((patient) => {
+        setPatient(patient);
+        setPatientLoading(false);
+      })
+      .catch((error) => {
+        setPatientError(error);
+      });
+
+    fetchPatientConditions(patientId)
+      .then((conditions) => {
+        setConditions(conditions);
+        setConditionsLoading(false);
+      })
+      .catch((error) => {
+        setConditionsError(error);
+      });
   };
 
   return (
@@ -147,20 +102,15 @@ function App() {
         {patientLoading ? (
           <CircularProgress className={classes.loadingIndicator} />
         ) : (
-          patient && (
-            <PatientCard patient={patient} hasError={hasPatientError} />
-          )
+          patient && <PatientCard patient={patient} error={patientError} />
         )}
       </div>
       <div className={classes.section}>
-        {conditionResultsLoading ? (
+        {conditionsLoading ? (
           <CircularProgress className={classes.loadingIndicator} />
         ) : (
           conditions && (
-            <ConditionsTable
-              results={conditions}
-              hasError={hasConditionError}
-            />
+            <ConditionsTable results={conditions} error={conditionsError} />
           )
         )}
       </div>

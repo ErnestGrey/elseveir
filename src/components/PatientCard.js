@@ -13,12 +13,12 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function PatientCard({ loading, patient, hasError }) {
+function PatientCard({ loading, patient, error }) {
   const classes = useStyles();
   return loading ? (
     <CircularProgress />
-  ) : hasError ? (
-    <Typography>Oops! Could not load the patient.</Typography>
+  ) : error ? (
+    <Typography>{`Error: ${error}`}</Typography>
   ) : (
     <Card className={classes.card}>
       <CardContent>

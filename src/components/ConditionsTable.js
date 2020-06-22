@@ -5,8 +5,8 @@ import {
   FormControl,
   Link,
   MenuItem,
-  Paper,
   Select,
+  Paper,
   Table,
   TableBody,
   TableCell,
@@ -28,7 +28,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const ConditionsTable = ({ loading, results, hasError }) => {
+const ConditionsTable = ({ loading, results, error }) => {
   const classes = useStyles();
   const [filteredResults, setFilteredResults] = useState(results);
   const [sortBy, setSortBy] = useState("");
@@ -52,8 +52,8 @@ const ConditionsTable = ({ loading, results, hasError }) => {
 
   return loading ? (
     <CircularProgress size={60} />
-  ) : hasError ? (
-    <Typography>Oops! Something went wrong.</Typography>
+  ) : error ? (
+    <Typography>{`Error: ${error}`}</Typography>
   ) : (
     <div>
       <Typography variant="caption">Sort By:</Typography>
@@ -71,7 +71,11 @@ const ConditionsTable = ({ loading, results, hasError }) => {
           </Select>
         </FormControl>
       </div>
-
+      {filteredResults.length === 0 && (
+        <Typography variant="h6">
+          There were no results found for this Patient ID
+        </Typography>
+      )}
       <TableContainer className={classes.table} component={Paper}>
         <Table stickyHeader>
           <TableHead>
@@ -91,9 +95,7 @@ const ConditionsTable = ({ loading, results, hasError }) => {
                     {condition.name}
                   </Link>
                 </TableCell>
-                <TableCell align="right">
-                  {condition.dateReported || "N/A"}
-                </TableCell>
+                <TableCell align="right">{condition.dateReported}</TableCell>
               </TableRow>
             ))}
           </TableBody>
